@@ -37,8 +37,8 @@ export function Login() {
   };
 
   const handleDemoFill = () => {
-    setEmail('demo@scheduler.dev');
-    setPassword('SchedulerDemo123!');
+    setEmail('admin@secureprint.in');
+    setPassword('Admin123!');
     setError(null);
   };
 
@@ -153,7 +153,7 @@ export function Login() {
               className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-300 bg-zinc-50 dark:bg-zinc-900/60 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 border border-zinc-200 dark:border-zinc-800 transition-all"
             >
               <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Fill Demo Credentials (demo@scheduler.dev)</span>
+              <span>Fill Admin Credentials (admin@secureprint.in)</span>
             </button>
           </div>
         </div>

@@ -2,9 +2,12 @@ import app from './app.js';
 import { config } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 import { reconcilePendingJobs } from './services/recoveryService.js';
+import { createEmailWorker } from './workers/emailWorker.js';
+import { getTransporter } from './services/mailerService.js';
 import { logger } from './utils/logger.js';
 
 let server = null;
+let emailWorker = null;
 
 async function startServer() {
   try {
@@ -13,12 +16,15 @@ async function startServer() {
     // Connect to persistent MongoDB
     await connectDB();
 
+    // Initialize mailer transporter (creates Ethereal account if not provided)
+    await getTransporter();
+
     // Reconcile pending / delayed queue jobs with DB
     await reconcilePendingJobs();
 
     // Start BullMQ Worker in same service process (allows single-service deployment on Render)
     if (process.env.START_WORKER !== 'false') {
-      createEmailWorker();
+      emailWorker = createEmailWorker();
       logger.info('BullMQ Email Worker started inside server process.');
     }
 
@@ -38,6 +44,14 @@ async function startServer() {
 // Graceful shutdown
 async function gracefulShutdown(signal) {
   logger.info(`Received ${signal}. Initiating graceful shutdown...`);
+  if (emailWorker) {
+    try {
+      await emailWorker.close();
+      logger.info('BullMQ worker closed.');
+    } catch (err) {
+      logger.error(`Error closing worker: ${err.message}`);
+    }
+  }
   if (server) {
     server.close(async () => {
       logger.info('HTTP server closed.');

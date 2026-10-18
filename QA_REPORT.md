@@ -135,6 +135,24 @@ All 26 automated integration tests passed with zero failures. Real-time browser 
    ```
 6. **Post-Restart Idempotency Check**: Subsequent queries confirmed `status = 'sent'`, `attempts = 1`. No duplicate sends occurred.
 
+### Scenario B: Express API Server Process Termination & Independence
+- **Scheduled Email ID**: `6ad4e650577573dffdb6723b`
+- **Target Scheduled Timestamp**: `2026-10-18T15:32:19.042Z`
+- **Recipient**: `api_restart_test@ethereal.email`
+- **Subject**: `API Server Restart Survival Test`
+
+### Execution Timeline:
+1. **15:31:28Z**: Email scheduled via API for execution 50 seconds in the future.
+2. **15:31:35Z**: **Express API server forcibly killed (`SIGKILL`)**. Port 5001 closed.
+3. **15:32:19Z**: At the scheduled target timestamp, while the Express API was completely offline, the decoupled BullMQ worker picked up the job from Redis and delivered it:
+   ```
+   [2026-10-18T15:32:19.189Z] [INFO] [Worker] Started processing job [6ad4e650577573dffdb6723b]
+   [2026-10-18T15:32:24.373Z] [INFO] [Worker] Successfully sent email [6ad4e650577573dffdb6723b] to api_restart_test@ethereal.email
+   [2026-10-18T15:32:24.374Z] [INFO] [Worker] Ethereal Preview URL: https://ethereal.email/message/atTOL.k58fhxfFSQatTmiFz99noLeZBgAAAAA-nJRbZmEL4rtu3HrrrRp5s
+   ```
+4. **15:32:48Z**: **API server restarted**. Reconnected to MongoDB and verified `status = 'sent'`, `attempts = 1`.
+   *Proves that the worker does not require the API server to remain alive in order to process jobs.*
+
 ---
 
 ## 6. Rate Limiting and Concurrency Evidence

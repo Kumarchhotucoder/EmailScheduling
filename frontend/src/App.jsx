@@ -14,8 +14,8 @@ function ProtectedRoute({ children }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 space-y-4">
-        <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-600 dark:text-zinc-400 flex flex-col items-center justify-center space-y-3">
+        <div className="w-8 h-8 border-3 border-indigo-500/20 border-t-indigo-600 rounded-full animate-spin" />
         <p className="text-xs font-medium tracking-wide">Authenticating session...</p>
       </div>
     );

@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { emailService } from '../services/emailService.js';
 import { EmailTable } from '../components/EmailTable.jsx';
-import { CheckCircle2, ExternalLink } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 export function Sent() {
-  const { refreshTrigger, onViewDetails, onCancelEmail } = useOutletContext();
+  const { refreshTrigger, onViewDetails, onCancelEmail, onOpenCompose, autoRefresh } = useOutletContext();
   const [emails, setEmails] = useState([]);
   const [pagination, setPagination] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -13,9 +13,9 @@ export function Sent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
 
-  const fetchSentEmails = useCallback(async () => {
+  const fetchSentEmails = useCallback(async (isBackground = false) => {
     try {
-      setIsLoading(true);
+      if (!isBackground) setIsLoading(true);
       setError(null);
       const res = await emailService.getEmails({
         page,
@@ -28,42 +28,53 @@ export function Sent() {
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   }, [page, searchTerm]);
 
   useEffect(() => {
-    fetchSentEmails();
+    fetchSentEmails(false);
   }, [fetchSentEmails, refreshTrigger]);
 
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(() => {
+      fetchSentEmails(true);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, fetchSentEmails]);
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in duration-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div>
-          <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <CheckCircle2 className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Delivered History</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Sent Emails</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Emails successfully processed by BullMQ workers and delivered via Nodemailer to Ethereal SMTP.
+          <h1 className="text-xl sm:text-2xl font-bold font-heading text-zinc-900 dark:text-zinc-100 tracking-tight">
+            Sent Emails
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
+            Emails successfully dispatched by BullMQ workers and received by the Ethereal development mail server.
           </p>
         </div>
       </div>
 
       <EmailTable
-        title="Delivered Emails Archive"
+        title="Delivered Archive"
         emails={emails}
         pagination={pagination}
         isLoading={isLoading}
         error={error}
-        onRefresh={fetchSentEmails}
+        onRefresh={() => fetchSentEmails(false)}
         onPageChange={(p) => setPage(p)}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         showStatusFilter={false}
         onViewDetails={onViewDetails}
         onCancelEmail={onCancelEmail}
+        onOpenCompose={onOpenCompose}
       />
     </div>
   );

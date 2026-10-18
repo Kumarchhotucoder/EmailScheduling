@@ -10,13 +10,19 @@ import {
   AlertCircle,
   Activity,
   Plus,
-  RefreshCw,
+  Radio,
   Sparkles,
-  Zap,
 } from 'lucide-react';
 
 export function Dashboard() {
-  const { refreshTrigger, onViewDetails, onCancelEmail, onOpenCompose } = useOutletContext();
+  const {
+    refreshTrigger,
+    onViewDetails,
+    onCancelEmail,
+    onOpenCompose,
+    autoRefresh,
+  } = useOutletContext();
+
   const [stats, setStats] = useState(null);
   const [emails, setEmails] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -25,10 +31,10 @@ export function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async (isBackground = false) => {
     try {
+      if (!isBackground) setIsLoading(true);
       setError(null);
       const [statsRes, emailsRes] = await Promise.all([
         emailService.getDashboardStats(),
@@ -46,86 +52,71 @@ export function Dashboard() {
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   }, [page, statusFilter, searchTerm]);
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboardData(false);
   }, [fetchDashboardData, refreshTrigger]);
 
-  // Periodic polling every 8s so scheduled emails transitioning to sent reflect automatically
+  // Periodic polling every 8s so status updates reflect automatically
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(() => {
-      fetchDashboardData();
+      fetchDashboardData(true);
     }, 8000);
     return () => clearInterval(interval);
   }, [autoRefresh, fetchDashboardData]);
 
   return (
-    <div className="space-y-8">
-      {/* Top Banner / Hero */}
-      <div className="relative rounded-3xl overflow-hidden p-6 sm:p-8 bg-gradient-to-r from-indigo-950/70 via-slate-900 to-slate-900 border border-indigo-500/20 shadow-2xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>BullMQ Queue • Redis AOF Persistence • Rate Limited</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Email Scheduling Control Center
-            </h1>
-            <p className="text-sm text-slate-400 max-w-xl">
-              Schedule future email dispatches with durable queue recovery, bounded retries, and instant
-              Ethereal sandbox previews.
-            </p>
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
+      {/* Overview Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400 border border-indigo-200/70 dark:border-indigo-800/60 font-mono">
+              <Radio className="w-3 h-3 text-indigo-500 animate-pulse" />
+              <span>BullMQ Delayed Queue</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                autoRefresh
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
-              title="Toggle Live Auto-Refresh (every 8s)"
-            >
-              <Zap className={`w-3.5 h-3.5 ${autoRefresh ? 'fill-emerald-400' : ''}`} />
-              <span>Auto-Sync: {autoRefresh ? 'ON' : 'OFF'}</span>
-            </button>
-
-            <button
-              id="hero-schedule-btn"
-              onClick={onOpenCompose}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/30 active:scale-95 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Schedule New Email</span>
-            </button>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold font-heading text-zinc-900 dark:text-zinc-100 tracking-tight">
+            Email Automation Dashboard
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
+            Monitor real-time delayed queues, background worker execution, and Ethereal test inbox previews.
+          </p>
         </div>
 
-        {/* Subtle decorative glow */}
-        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex items-center gap-3">
+          <button
+            id="hero-schedule-btn"
+            onClick={onOpenCompose}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 shadow-sm shadow-indigo-600/20 transition-all self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Schedule Email</span>
+          </button>
+        </div>
       </div>
 
-      {/* Metrics Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
           title="Total Emails"
           value={stats?.total ?? 0}
           icon={Mail}
           color="indigo"
-          subtitle="All scheduled & sent"
+          subtitle="All created records"
+          isLoading={isLoading && !stats}
         />
         <StatCard
           title="Scheduled"
           value={stats?.scheduled ?? 0}
           icon={Clock}
           color="sky"
-          subtitle="Awaiting trigger in queue"
+          subtitle="Waiting in queue"
+          isLoading={isLoading && !stats}
         />
         <StatCard
           title="Processing"
@@ -133,31 +124,34 @@ export function Dashboard() {
           icon={Activity}
           color="amber"
           subtitle="Active in worker"
+          isLoading={isLoading && !stats}
         />
         <StatCard
           title="Sent"
           value={stats?.sent ?? 0}
           icon={CheckCircle2}
           color="emerald"
-          subtitle="Delivered to Ethereal"
+          subtitle="Ethereal delivered"
+          isLoading={isLoading && !stats}
         />
         <StatCard
           title="Failed"
           value={stats?.failed ?? 0}
           icon={AlertCircle}
           color="rose"
-          subtitle="Attempts exhausted"
+          subtitle="Exhausted retries"
+          isLoading={isLoading && !stats}
         />
       </div>
 
-      {/* Email Table */}
+      {/* Activity Table */}
       <EmailTable
         title="Recent Email Activity"
         emails={emails}
         pagination={pagination}
         isLoading={isLoading}
         error={error}
-        onRefresh={fetchDashboardData}
+        onRefresh={() => fetchDashboardData(false)}
         onPageChange={(newPage) => setPage(newPage)}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -165,6 +159,7 @@ export function Dashboard() {
         onStatusFilterChange={setStatusFilter}
         onViewDetails={onViewDetails}
         onCancelEmail={onCancelEmail}
+        onOpenCompose={onOpenCompose}
       />
     </div>
   );

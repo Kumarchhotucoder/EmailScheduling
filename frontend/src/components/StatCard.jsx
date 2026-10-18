@@ -1,29 +1,77 @@
 import React from 'react';
 
-export function StatCard({ title, value, icon: Icon, color = 'indigo', subtitle }) {
+export function StatCard({
+  title,
+  value,
+  icon: Icon,
+  color = 'indigo',
+  subtitle,
+  isLoading = false,
+}) {
   const colorMap = {
-    indigo: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-    sky: 'text-sky-400 bg-sky-500/10 border-sky-500/20',
-    emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-    rose: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
-    amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+    indigo: {
+      iconBg: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-800/60',
+      pill: 'bg-indigo-500',
+    },
+    sky: {
+      iconBg: 'bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400 border-sky-200/60 dark:border-sky-800/60',
+      pill: 'bg-sky-500',
+    },
+    emerald: {
+      iconBg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-800/60',
+      pill: 'bg-emerald-500',
+    },
+    rose: {
+      iconBg: 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200/60 dark:border-rose-800/60',
+      pill: 'bg-rose-500',
+    },
+    amber: {
+      iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200/60 dark:border-amber-800/60',
+      pill: 'bg-amber-500',
+    },
   };
 
-  const currentStyle = colorMap[color] || colorMap.indigo;
+  const scheme = colorMap[color] || colorMap.indigo;
+
+  if (isLoading) {
+    return (
+      <div className="saas-card p-5 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-3 w-16 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            <div className="h-7 w-12 bg-zinc-200 dark:bg-zinc-800 rounded" />
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+        </div>
+        <div className="h-2 w-24 bg-zinc-200 dark:bg-zinc-800 rounded mt-3" />
+      </div>
+    );
+  }
 
   return (
-    <div className="glass-panel glass-panel-hover rounded-2xl p-5 relative overflow-hidden group">
-      <div className="flex items-center justify-between">
+    <div className="saas-card saas-card-interactive p-5 relative overflow-hidden group">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-1">{title}</p>
-          <h3 className="text-3xl font-extrabold text-white tracking-tight">{value ?? 0}</h3>
-          {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
+          <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 tracking-wider uppercase">
+            {title}
+          </span>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 font-heading tracking-tight mt-1 tabular-nums">
+            {value ?? 0}
+          </h3>
+          {subtitle && (
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1 line-clamp-1">
+              {subtitle}
+            </p>
+          )}
         </div>
-        <div className={`p-3.5 rounded-xl border ${currentStyle} transition-transform group-hover:scale-110`}>
-          <Icon className="w-6 h-6" />
-        </div>
+        {Icon && (
+          <div
+            className={`p-2.5 rounded-xl border ${scheme.iconBg} transition-transform group-hover:scale-105 flex-shrink-0`}
+          >
+            <Icon className="w-4 h-4" />
+          </div>
+        )}
       </div>
-      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 }

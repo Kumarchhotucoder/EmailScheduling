@@ -5,7 +5,7 @@ import { EmailTable } from '../components/EmailTable.jsx';
 import { AlertCircle } from 'lucide-react';
 
 export function Failed() {
-  const { refreshTrigger, onViewDetails, onCancelEmail } = useOutletContext();
+  const { refreshTrigger, onViewDetails, onCancelEmail, onOpenCompose, autoRefresh } = useOutletContext();
   const [emails, setEmails] = useState([]);
   const [pagination, setPagination] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -13,9 +13,9 @@ export function Failed() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
 
-  const fetchFailedEmails = useCallback(async () => {
+  const fetchFailedEmails = useCallback(async (isBackground = false) => {
     try {
-      setIsLoading(true);
+      if (!isBackground) setIsLoading(true);
       setError(null);
       const res = await emailService.getEmails({
         page,
@@ -28,25 +28,35 @@ export function Failed() {
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   }, [page, searchTerm]);
 
   useEffect(() => {
-    fetchFailedEmails();
+    fetchFailedEmails(false);
   }, [fetchFailedEmails, refreshTrigger]);
 
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(() => {
+      fetchFailedEmails(true);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, fetchFailedEmails]);
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in duration-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div>
-          <div className="flex items-center gap-2 text-rose-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <AlertCircle className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <AlertCircle className="w-3.5 h-3.5" />
             <span>Dead Letter / Exhausted Retries</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Failed Emails</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Emails that failed delivery attempts after bounded exponential backoff retries. Click any row to review error details.
+          <h1 className="text-xl sm:text-2xl font-bold font-heading text-zinc-900 dark:text-zinc-100 tracking-tight">
+            Failed Queue
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
+            Emails that failed delivery attempts after bounded exponential backoff retries. Click any row to review the failure log.
           </p>
         </div>
       </div>
@@ -57,13 +67,14 @@ export function Failed() {
         pagination={pagination}
         isLoading={isLoading}
         error={error}
-        onRefresh={fetchFailedEmails}
+        onRefresh={() => fetchFailedEmails(false)}
         onPageChange={(p) => setPage(p)}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         showStatusFilter={false}
         onViewDetails={onViewDetails}
         onCancelEmail={onCancelEmail}
+        onOpenCompose={onOpenCompose}
       />
     </div>
   );

@@ -1,0 +1,29 @@
+{
+  "name": "email-scheduler-monorepo",
+  "version": "1.0.0",
+  "description": "Production-ready Full-Stack Email Scheduling System with BullMQ, Redis, MongoDB, and React",
+  "private": true,
+  "scripts": {
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:worker": "npm --prefix backend run worker",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "test:backend": "npm --prefix backend test",
+    "test": "npm --prefix backend test"
+  },
+  "keywords": [
+    "email-scheduler",
+    "bullmq",
+    "redis",
+    "mongodb",
+    "express",
+    "react",
+    "nodemailer",
+    "ethereal"
+  ],
+  "author": "",
+  "license": "ISC"
+}

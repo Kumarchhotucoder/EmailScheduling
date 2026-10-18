@@ -9,14 +9,34 @@ if (missing.length > 0) {
   console.warn(`[WARN] Missing environment variables: ${missing.join(', ')}. Using development defaults.`);
 }
 
+let redisHost = process.env.REDIS_HOST || 'localhost';
+let redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
+let redisPassword = process.env.REDIS_PASSWORD || undefined;
+let redisTls = process.env.REDIS_TLS === 'true' ? {} : undefined;
+
+if (process.env.REDIS_URL) {
+  try {
+    const parsed = new URL(process.env.REDIS_URL);
+    redisHost = parsed.hostname;
+    redisPort = parseInt(parsed.port || '6379', 10);
+    redisPassword = parsed.password ? decodeURIComponent(parsed.password) : undefined;
+    if (parsed.protocol === 'rediss:') {
+      redisTls = {};
+    }
+  } catch (e) {
+    console.error('Failed to parse REDIS_URL:', e.message);
+  }
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '5001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/email_scheduler',
   redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    password: process.env.REDIS_PASSWORD || undefined,
+    host: redisHost,
+    port: redisPort,
+    password: redisPassword,
+    tls: redisTls,
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'dev_super_secret_jwt_key_at_least_32_chars_long',

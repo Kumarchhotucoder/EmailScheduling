@@ -6,6 +6,7 @@ export const redisConnectionOptions = {
   host: config.redis.host,
   port: config.redis.port,
   password: config.redis.password || undefined,
+  tls: config.redis.tls || undefined,
   maxRetriesPerRequest: null, // Required by BullMQ
   enableReadyCheck: false,
   retryStrategy(times) {

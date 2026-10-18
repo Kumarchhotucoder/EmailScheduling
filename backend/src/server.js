@@ -16,6 +16,12 @@ async function startServer() {
     // Reconcile pending / delayed queue jobs with DB
     await reconcilePendingJobs();
 
+    // Start BullMQ Worker in same service process (allows single-service deployment on Render)
+    if (process.env.START_WORKER !== 'false') {
+      createEmailWorker();
+      logger.info('BullMQ Email Worker started inside server process.');
+    }
+
     // Start Express HTTP server
     server = app.listen(config.port, () => {
       logger.info(`API Server running successfully on port ${config.port}`);
